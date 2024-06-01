@@ -3,9 +3,14 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const User = require('./models/User');
-
+const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const app = express();
+
+app.use(cors());
 app.use(bodyParser.json());
+
+const JWT_SECRET = 'test_secret_key';
 
 mongoose.connect('mongodb://localhost:27017/usuarios', { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('Conectado a MongoDB'))
@@ -36,7 +41,8 @@ app.post('/api/login', async (req, res) => {
     if (!esValida) {
       return res.status(400).send('Contraseña incorrecta');
     }
-    res.status(200).send('Inicio de sesión exitoso');
+    const token = jwt.sign({ id: usuario._id, email: usuario.email }, JWT_SECRET, { expiresIn: '1h' });
+    res.status(200).json({ message: 'Inicio de sesión exitoso', token });
   } catch (error) {
     console.error('Error al iniciar sesión:', error);
     res.status(400).send(`Error al iniciar sesión: ${error.message}`);
